@@ -1,0 +1,84 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Elagoht/collage-snippets-highlighter/main/schemas/collage-plugin-manifest.schema.json",
+  "name": "elagoht/analytics",
+  "description": "A collage plugin that adds an analytics snippet to every page's head.",
+  "repository": "https://github.com/Elagoht/collage-analytics",
+  "config": {
+    "type": "object",
+    "description": "A collage plugin that adds an analytics snippet to every page's head.",
+    "properties": {
+      "exclude": {
+        "type": "array",
+        "description": "Exclude are names of pages that get no snippet: an admin page, a page behind a login.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "goatcounter": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Code is the site's code: \"mysite\" counts at mysite.goatcounter.com."
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "Endpoint is the count URL, for a self-hosted server: \"https://stats.example.com/count\". Default from Code."
+          },
+          "script": {
+            "type": "string",
+            "description": "Script is the script's URL. Default \"https://gc.zgo.at/count.js\"."
+          }
+        }
+      },
+      "googleAnalytics": {
+        "type": "object",
+        "description": "GoogleAnalytics is Google Analytics 4. It sets cookies and sends what it collects to Google: it is not privacy-friendly, and in much of the world it needs the visitor's consent — see RequireConsent.",
+        "properties": {
+          "measurementId": {
+            "type": "string",
+            "description": "MeasurementID is the stream's id: \"G-XXXXXXXXXX\"."
+          }
+        }
+      },
+      "loaderPath": {
+        "type": "string",
+        "description": "LoaderPath is where the plugin's loader script is served, when there is one: with RespectDNT, RequireConsent or Google Analytics. Default \"/collage-analytics.js\"."
+      },
+      "plausible": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "Domain is the site as Plausible knows it: \"example.com\". Several, comma-separated, send each view to each."
+          },
+          "script": {
+            "type": "string",
+            "description": "Script is the script's URL, for a self-hosted server or one of Plausible's script variants. Default \"https://plausible.io/js/script.js\"."
+          }
+        }
+      },
+      "requireConsent": {
+        "type": "boolean",
+        "description": "RequireConsent loads nothing until the page calls window.collageAnalyticsConsent(). The site shows its own banner and calls it when the visitor agrees; the answer is remembered in localStorage, and collageAnalyticsConsent(false) forgets it."
+      },
+      "respectDnt": {
+        "type": "boolean",
+        "description": "RespectDNT loads nothing for a browser sending Do Not Track or Global Privacy Control. The check runs in the browser, before any provider's script is fetched; a page cached for everyone cannot make it on the server."
+      },
+      "umami": {
+        "type": "object",
+        "properties": {
+          "script": {
+            "type": "string",
+            "description": "Script is the script's URL. Default \"https://cloud.umami.is/script.js\"."
+          },
+          "websiteId": {
+            "type": "string",
+            "description": "WebsiteID is the site's id, a UUID."
+          }
+        }
+      }
+    }
+  }
+}
