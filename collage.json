@@ -29,7 +29,8 @@
             "type": "string",
             "description": "Script is the script's URL. Default \"https://gc.zgo.at/count.js\"."
           }
-        }
+        },
+        "additionalProperties": false
       },
       "googleAnalytics": {
         "type": "object",
@@ -39,7 +40,8 @@
             "type": "string",
             "description": "MeasurementID is the stream's id: \"G-XXXXXXXXXX\"."
           }
-        }
+        },
+        "additionalProperties": false
       },
       "loaderPath": {
         "type": "string",
@@ -56,7 +58,8 @@
             "type": "string",
             "description": "Script is the script's URL, for a self-hosted server or one of Plausible's script variants. Default \"https://plausible.io/js/script.js\"."
           }
-        }
+        },
+        "additionalProperties": false
       },
       "requireConsent": {
         "type": "boolean",
@@ -77,8 +80,10 @@
             "type": "string",
             "description": "WebsiteID is the site's id, a UUID."
           }
-        }
+        },
+        "additionalProperties": false
       }
-    }
+    },
+    "additionalProperties": false
   }
 }
