@@ -13,7 +13,7 @@ app, err := collage.New(&collage.Config{
 })
 ```
 
-Requires collage v0.23.0 or later. The layout places the snippet with
+Requires collage v0.50.0 or later. The layout places the snippet with
 `{{hoist "head"}}`; without the marker nothing appears.
 
 ## Providers
