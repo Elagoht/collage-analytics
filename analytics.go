@@ -64,6 +64,12 @@ type Options struct {
 	// it when the visitor agrees; the answer is remembered in localStorage, and
 	// collageAnalyticsConsent(false) forgets it.
 	RequireConsent bool `json:"requireConsent"`
+	// ConsentCategory gates every tag the plugin writes behind the consent
+	// plugin (elagoht/consent): each is written as <script type="text/plain"
+	// data-consent="category">, which that plugin runs only once the visitor has
+	// agreed to the category. Matching ^[a-z0-9-]+$. It replaces RequireConsent,
+	// and setting both is an error. RespectDNT still applies, inside the gate.
+	ConsentCategory string `json:"consentCategory"`
 	// LoaderPath is where the plugin's loader script is served, when there is
 	// one: with RespectDNT, RequireConsent or Google Analytics. Default
 	// "/collage-analytics.js".
@@ -118,7 +124,7 @@ type Plugin struct {
 func New(opts Options) *Plugin { return &Plugin{opts: opts} }
 
 func (p *Plugin) Name() string                   { return Name }
-func (p *Plugin) Version() string                { return "0.1.5" }
+func (p *Plugin) Version() string                { return "0.2.0" }
 func (p *Plugin) Shutdown(context.Context) error { return nil }
 
 var (
@@ -144,10 +150,11 @@ type loaderConfig struct {
 }
 
 var (
-	uuidPattern   = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
-	gaPattern     = regexp.MustCompile(`^G-[A-Z0-9]{4,20}$`)
-	codePattern   = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
-	domainPattern = regexp.MustCompile(`^[A-Za-z0-9.-]+$`)
+	uuidPattern     = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+	categoryPattern = regexp.MustCompile(`^[a-z0-9-]+$`)
+	gaPattern       = regexp.MustCompile(`^G-[A-Z0-9]{4,20}$`)
+	codePattern     = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
+	domainPattern   = regexp.MustCompile(`^[A-Za-z0-9.-]+$`)
 )
 
 // Init reads the configuration, checks it and, outside development, serves the
@@ -163,6 +170,14 @@ func (p *Plugin) Init(_ context.Context, host collage.Host) error {
 		return err
 	}
 	o := &p.opts
+	if o.ConsentCategory != "" {
+		if o.RequireConsent {
+			return errors.New("analytics: set consentCategory or requireConsent, not both: the consent plugin replaces the plugin's own consent")
+		}
+		if !categoryPattern.MatchString(o.ConsentCategory) {
+			return fmt.Errorf("analytics: consent category %q must be lowercase letters, digits and hyphens", o.ConsentCategory)
+		}
+	}
 	if o.LoaderPath == "" {
 		o.LoaderPath = "/collage-analytics.js"
 	}
@@ -186,8 +201,18 @@ func (p *Plugin) Init(_ context.Context, host collage.Host) error {
 		return nil
 	}
 
+	gate := ""
+	if o.ConsentCategory != "" {
+		gate = ` type="text/plain" data-consent="` + o.ConsentCategory + `"` // checked above
+		if !o.RespectDNT {
+			// No browser-side decision is left to make: the consent plugin runs
+			// the tags themselves, Google's configuration call included.
+			p.head = tags(scripts, gate) + gaTags(ga, gate)
+			return nil
+		}
+	}
 	if !o.RespectDNT && !o.RequireConsent && ga == "" {
-		p.head = tags(scripts)
+		p.head = tags(scripts, "")
 		return nil
 	}
 	body, err := loader(loaderConfig{DNT: o.RespectDNT, Consent: o.RequireConsent, Scripts: scripts, GA: ga})
@@ -201,7 +226,9 @@ func (p *Plugin) Init(_ context.Context, host collage.Host) error {
 	if err := host.RegisterDocument(doc); err != nil {
 		return fmt.Errorf("analytics: %w", err)
 	}
-	p.head = template.HTML(`<script defer src="` + html.EscapeString(o.LoaderPath) + `"></script>`) // assembled from an escaped path
+	// With a consent category the loader is itself gated, so it runs, and checks
+	// Do Not Track, only after consent.
+	p.head = template.HTML(`<script` + gate + ` defer src="` + html.EscapeString(o.LoaderPath) + `"></script>`) // assembled from an escaped path and a checked category
 	return nil
 }
 
@@ -281,10 +308,12 @@ func scriptURL(what, raw, def string) (string, error) {
 
 // tags writes the scripts as tags, their attributes in a fixed order so a page
 // renders the same bytes every time and its ETag holds.
-func tags(scripts []script) template.HTML {
+// gate is written after "<script", empty or the attributes the consent plugin
+// reads.
+func tags(scripts []script, gate string) template.HTML {
 	var b strings.Builder
 	for _, s := range scripts {
-		b.WriteString("<script ")
+		b.WriteString("<script" + gate + " ")
 		if s.Async {
 			b.WriteString("async")
 		} else {
@@ -301,6 +330,18 @@ func tags(scripts []script) template.HTML {
 		b.WriteString(` src="` + html.EscapeString(s.Src) + `"></script>`)
 	}
 	return template.HTML(b.String()) // assembled here from escaped values
+}
+
+// gaTags is Google Analytics as gated tags: its script, and the inline call that
+// configures it. The id was checked against gaPattern, so it holds nothing that
+// could end the script.
+func gaTags(id, gate string) template.HTML {
+	if id == "" {
+		return ""
+	}
+	return template.HTML(`<script` + gate + ` async src="https://www.googletagmanager.com/gtag/js?id=` + url.QueryEscape(id) + `"></script>` +
+		`<script` + gate + `>window.dataLayer=window.dataLayer||[];window.gtag=function(){window.dataLayer.push(arguments)};` +
+		`window.gtag("js",new Date());window.gtag("config","` + id + `");</script>`) // id and gate are checked
 }
 
 // OnBeforeRender hoists the snippet into the page's head. Hoisted at depth zero, so

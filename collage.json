@@ -7,6 +7,10 @@
     "type": "object",
     "description": "A collage plugin that adds an analytics snippet to every page's head.",
     "properties": {
+      "consentCategory": {
+        "type": "string",
+        "description": "ConsentCategory gates every tag the plugin writes behind the consent plugin (elagoht/consent): each is written as <script type=\"text/plain\" data-consent=\"category\">, which that plugin runs only once the visitor has agreed to the category. Matching ^[a-z0-9-]+$. It replaces RequireConsent, and setting both is an error. RespectDNT still applies, inside the gate."
+      },
       "exclude": {
         "type": "array",
         "description": "Exclude are names of pages that get no snippet: an admin page, a page behind a login.",

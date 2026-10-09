@@ -13,7 +13,7 @@ app, err := collage.New(&collage.Config{
 })
 ```
 
-Requires collage v0.50.0 or later. The layout places the snippet with
+Requires collage v0.57.0 or later. The layout places the snippet with
 `{{hoist "head"}}`; without the marker nothing appears.
 
 ## Providers
@@ -82,6 +82,34 @@ Google Analytics always goes through the loader, because it has to be configured
 a call once its script is on the page, and an inline script is what a strict policy
 refuses.
 
+## Consent with elagoht/consent
+
+With [elagoht/consent](https://github.com/Elagoht/collage-consent) on the site,
+set `ConsentCategory` instead of `RequireConsent`. Every tag the plugin writes
+becomes plain text the consent plugin runs once the visitor has agreed to that
+category, and the visitor gets one banner and one place to change their mind:
+
+```json
+{ "elagoht/analytics": { "plausible": { "domain": "example.com" }, "consentCategory": "analytics" } }
+```
+
+```html
+<script type="text/plain" data-consent="analytics" defer data-domain="example.com" src="https://plausible.io/js/script.js"></script>
+```
+
+- The plugin does not import the consent plugin; it only writes the markup, so
+  `consentCategory` must name a category the consent plugin knows
+  (`^[a-z0-9-]+$`), or the tags never run.
+- Google Analytics is written as two gated tags, its script and the inline call
+  that configures it, with no loader.
+- `RespectDNT` still applies: the page then holds one gated tag, the loader, so
+  it runs only after consent and checks Do Not Track before loading anything.
+- `ConsentCategory` and `RequireConsent` together stop the application from
+  starting; so does a category that is not lowercase letters, digits and hyphens.
+- Google Analytics' inline tag is an inline script. The plugin cannot put a
+  nonce on it, so under a strict policy it needs a hash in `script-src`; see the
+  consent plugin's notes on gated inline scripts.
+
 ## Content-Security-Policy
 
 Every script is external, so a strict policy needs origins, not `'unsafe-inline'`.
@@ -114,6 +142,8 @@ takes the place of the one in the table.
 }
 ```
 
+`consentCategory` replaces `requireConsent`; use one.
+
 No provider, a Plausible domain with a scheme or a path, an Umami id that is not a
 UUID, a GoatCounter code that is not one, a Universal Analytics `UA-` id, a script
 or endpoint URL that is not absolute http or https, and a loader path not beginning
@@ -130,3 +160,8 @@ with `/` stop the application from starting — in development too.
   says "analytics"; `LoaderPath` renames it, the providers' own are theirs.
 - The plugin cannot put `{{cspNonce}}` on its tags, so a nonce-only policy with
   `'strict-dynamic'` and no host sources refuses them; list the origins.
+
+## Changes
+
+- **0.2.0** `ConsentCategory` gates every tag behind elagoht/consent. Uses collage
+  v0.57.0.
