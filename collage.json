@@ -49,7 +49,7 @@
       },
       "loaderPath": {
         "type": "string",
-        "description": "LoaderPath is where the plugin's loader script is served, when there is one: with RespectDNT, RequireConsent or Google Analytics. Default \"/collage-analytics.js\"."
+        "description": "LoaderPath is where the plugin's loader script is served, when there is one: with RespectDNT, RequireConsent or Google Analytics without ConsentCategory. Default \"/collage-analytics.js\"."
       },
       "plausible": {
         "type": "object",

@@ -71,8 +71,8 @@ type Options struct {
 	// and setting both is an error. RespectDNT still applies, inside the gate.
 	ConsentCategory string `json:"consentCategory"`
 	// LoaderPath is where the plugin's loader script is served, when there is
-	// one: with RespectDNT, RequireConsent or Google Analytics. Default
-	// "/collage-analytics.js".
+	// one: with RespectDNT, RequireConsent or Google Analytics without
+	// ConsentCategory. Default "/collage-analytics.js".
 	LoaderPath string `json:"loaderPath"`
 }
 

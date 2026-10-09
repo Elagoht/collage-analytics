@@ -78,9 +78,10 @@ provider's script is fetched:
   defined by the deferred loader, so call it from the banner's handlers, not from
   a script that runs before the page has parsed.
 
-Google Analytics always goes through the loader, because it has to be configured by
-a call once its script is on the page, and an inline script is what a strict policy
-refuses.
+Without `ConsentCategory`, Google Analytics always goes through the loader, because
+it has to be configured by a call once its script is on the page, and an inline
+script is what a strict policy refuses. With `ConsentCategory` and no `RespectDNT`
+there is no loader (see below).
 
 ## Consent with elagoht/consent
 
@@ -104,15 +105,23 @@ category, and the visitor gets one banner and one place to change their mind:
   that configures it, with no loader.
 - `RespectDNT` still applies: the page then holds one gated tag, the loader, so
   it runs only after consent and checks Do Not Track before loading anything.
+- `RespectDNT` also honours Global Privacy Control, not only Do Not Track, so a
+  browser sending GPC loads nothing even after "Accept all". That is deliberate and
+  privacy-protective; the consent plugin's own choice is not overridden, this
+  plugin simply declines to load.
 - `ConsentCategory` and `RequireConsent` together stop the application from
   starting; so does a category that is not lowercase letters, digits and hyphens.
 - Google Analytics' inline tag is an inline script. The plugin cannot put a
-  nonce on it, so under a strict policy it needs a hash in `script-src`; see the
-  consent plugin's notes on gated inline scripts.
+  nonce on it, so under a strict policy it needs a hash in `script-src`; the
+  consent plugin's README explains how, in its Content Security Policy section,
+  "Gated inline scripts under a strict CSP".
 
 ## Content-Security-Policy
 
 Every script is external, so a strict policy needs origins, not `'unsafe-inline'`.
+The one exception is Google Analytics with `ConsentCategory`, whose configuration
+call is an inline script (see "Consent with elagoht/consent" above) and needs its
+own `'sha256-…'`.
 With [collage-secure](https://github.com/Elagoht/collage-secure):
 
 | Provider | `script-src` | `connect-src` |
