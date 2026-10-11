@@ -13,7 +13,7 @@ app, err := collage.New(&collage.Config{
 })
 ```
 
-Requires collage v0.57.0 or later. The layout places the snippet with
+Requires collage v0.58.0 or later. The layout places the snippet with
 `{{hoist "head"}}`; without the marker nothing appears.
 
 ## Providers
@@ -172,5 +172,7 @@ with `/` stop the application from starting — in development too.
 
 ## Changes
 
+- **0.2.1** collage.json is regenerated for editors. Nothing else changes. Uses
+  collage v0.58.0.
 - **0.2.0** `ConsentCategory` gates every tag behind elagoht/consent. Uses collage
   v0.57.0.
