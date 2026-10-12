@@ -117,6 +117,15 @@ func TestInitialismKeys(t *testing.T) {
 				t.Errorf("%s: %s missing", config, want)
 			}
 		}
+		// respectDNT took effect: the loader checks Do Not Track.
+		if js := get(a, "/collage-analytics.js").Body.String(); !strings.Contains(js, `"dnt":true`) {
+			t.Errorf("%s: the loader does not respect DNT:\n%s", config, js)
+		}
+	}
+	// And without it, it does not: the assertion above tells the two apart.
+	a := app(t, false, analytics.Options{}, `{"googleAnalytics": {"measurementID": "G-ABC123"}}`)
+	if js := get(a, "/collage-analytics.js").Body.String(); !strings.Contains(js, `"dnt":false`) {
+		t.Errorf("without respectDNT the loader = %s", js)
 	}
 }
 

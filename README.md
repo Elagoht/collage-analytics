@@ -177,7 +177,8 @@ with `/` stop the application from starting — in development too.
   `websiteId` is `websiteID`, Google Analytics' `measurementId` is
   `measurementID`. Keys match case-insensitively, so the old spellings still
   work; the manifest and the docs use the new ones. collage.json gains a setup
-  note. Requires collage v0.61.0.
+  note. The minimum collage is now v0.61.0 (was v0.58.0): its strict plugin
+  configuration stops the application at an unknown key.
 
 - **0.2.2** Rebuilt against collage v0.60.0; the plugin's code is unchanged.
 
