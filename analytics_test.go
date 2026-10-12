@@ -186,11 +186,7 @@ func TestLoaderEscapes(t *testing.T) {
 func TestStaticBuild(t *testing.T) {
 	out := t.TempDir()
 	a := app(t, false, analytics.Options{Plausible: &analytics.Plausible{Domain: "example.com"}, RequireConsent: true}, "")
-	b, err := collage.NewBuilder(a, collage.BuildOptions{OutDir: out})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := b.Build(context.Background()); err != nil {
+	if _, err := collage.Build(context.Background(), a, collage.BuildOptions{OutDir: out}); err != nil {
 		t.Fatal(err)
 	}
 	page, err := os.ReadFile(filepath.Join(out, "index.html"))

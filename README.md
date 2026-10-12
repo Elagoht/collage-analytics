@@ -172,6 +172,8 @@ with `/` stop the application from starting — in development too.
 
 ## Changes
 
+- **0.2.2** Rebuilt against collage v0.60.0; the plugin's code is unchanged.
+
 - **0.2.1** collage.json is regenerated for editors. Nothing else changes. Uses
   collage v0.58.0.
 - **0.2.0** `ConsentCategory` gates every tag behind elagoht/consent. Uses collage
