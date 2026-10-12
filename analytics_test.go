@@ -2,45 +2,51 @@ package analytics_test
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-	"testing/fstest"
 
 	analytics "github.com/Elagoht/collage-analytics"
 	"github.com/Elagoht/collage/pkg/collage"
+	"github.com/Elagoht/collage/pkg/collagetest"
 )
 
 const layout = `<!doctype html><html><head><title>t</title>{{hoist "head"}}</head><body>x</body></html>`
 
-func app(t *testing.T, dev bool, opts analytics.Options, config string) *collage.App {
-	t.Helper()
-	cfg := &collage.Config{
-		DevMode:  dev,
-		Server:   collage.ServerConfig{Host: "localhost", Port: 3000},
-		Template: collage.TemplateConfig{FS: fstest.MapFS{"t/p.html": {Data: []byte(layout)}}, Root: "t"},
-		Plugins:  []collage.Plugin{analytics.New(opts)},
+// siteOptions is an application with the plugin and two pages, home at / and
+// admin at /admin, in development when dev is set, with config as the plugin's
+// section when it is not "".
+func siteOptions(dev bool, opts analytics.Options, config string) []collagetest.SiteOption {
+	options := []collagetest.SiteOption{
+		collagetest.WithPlugins(analytics.New(opts)),
+		collagetest.WithoutHome(),
+		collagetest.WithTemplates(map[string]string{"p.html": layout}),
+		collagetest.WithRegister(
+			collage.NewPage("home").WithContent(collage.NewFragment("home", "p.html").Build()).WithPath("en", "/").Static().Build(),
+			collage.NewPage("admin").WithContent(collage.NewFragment("admin", "p.html").Build()).WithPath("en", "/admin").Static().Build(),
+		),
+		collagetest.WithConfig(func(c *collage.Config) { c.DevMode = dev }),
 	}
 	if config != "" {
-		cfg.PluginConfig = map[string]json.RawMessage{analytics.Name: json.RawMessage(config)}
+		options = append(options, collagetest.WithPluginConfig(analytics.Name, config))
 	}
-	a, err := collage.New(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, p := range []*collage.Page{
-		collage.NewPage("home").WithContent(collage.NewFragment("home", "p.html").Build()).WithPath("en", "/").Static().Build(),
-		collage.NewPage("admin").WithContent(collage.NewFragment("admin", "p.html").Build()).WithPath("en", "/admin").Static().Build(),
-	} {
-		if err := a.RegisterPage(p); err != nil {
-			t.Fatal(err)
-		}
-	}
-	return a
+	return options
+}
+
+// app starts siteOptions' application.
+func app(t *testing.T, dev bool, opts analytics.Options, config string) *collage.App {
+	t.Helper()
+	return collagetest.NewSite(t, siteOptions(dev, opts, config)...).App
+}
+
+// refused reports whether siteOptions' application fails to start.
+func refused(t *testing.T, opts analytics.Options) bool {
+	t.Helper()
+	_, err := collagetest.TrySite(t, siteOptions(false, opts, "")...)
+	return err != nil
 }
 
 func get(a *collage.App, path string) *httptest.ResponseRecorder {
@@ -97,6 +103,23 @@ func TestProvidersInTheHead(t *testing.T) {
 	}
 }
 
+// The keys renamed for their initialisms in v0.2.3 decode; the old spellings
+// still do too, since keys match case-insensitively.
+func TestInitialismKeys(t *testing.T) {
+	for _, config := range []string{
+		`{"umami": {"websiteID": "94db1cb1-74f4-4a40-ad6c-962362670409"}, "goatCounter": {"code": "mysite"}, "googleAnalytics": {"measurementID": "G-ABC123"}, "respectDNT": true}`,
+		`{"umami": {"websiteId": "94db1cb1-74f4-4a40-ad6c-962362670409"}, "goatcounter": {"code": "mysite"}, "googleAnalytics": {"measurementId": "G-ABC123"}, "respectDnt": true}`,
+	} {
+		a := app(t, false, analytics.Options{}, config)
+		got := get(a, "/").Body.String()
+		for _, want := range []string{"94db1cb1-74f4-4a40-ad6c-962362670409", "mysite.goatcounter.com", "G-ABC123"} {
+			if !strings.Contains(got, want) && !strings.Contains(get(a, "/collage-analytics.js").Body.String(), want) {
+				t.Errorf("%s: %s missing", config, want)
+			}
+		}
+	}
+}
+
 func TestConfiguredFromJSON(t *testing.T) {
 	a := app(t, false, analytics.Options{}, `{"plausible": {"domain": "example.org"}}`)
 	if got := head(t, get(a, "/").Body.String()); !strings.Contains(got, `data-domain="example.org"`) {
@@ -124,8 +147,8 @@ func TestOffInDevelopment(t *testing.T) {
 	if code := get(a, "/collage-analytics.js").Code; code != http.StatusNotFound {
 		t.Errorf("loader served in development: %d", code)
 	}
-	if code := get(app(t, true, analytics.Options{}, ""), "/").Code; code != http.StatusServiceUnavailable {
-		t.Errorf("a misconfigured plugin started in development: %d", code)
+	if _, err := collagetest.TrySite(t, siteOptions(true, analytics.Options{}, "")...); err == nil {
+		t.Error("a misconfigured plugin started in development")
 	}
 }
 
@@ -211,8 +234,8 @@ func TestMisconfigurationStopsStartup(t *testing.T) {
 		"relative loader path":  {Plausible: &analytics.Plausible{Domain: "example.com"}, LoaderPath: "a.js"},
 	} {
 		t.Run(name, func(t *testing.T) {
-			if code := get(app(t, false, opts, ""), "/").Code; code != http.StatusServiceUnavailable {
-				t.Errorf("status %d, want 503", code)
+			if !refused(t, opts) {
+				t.Error("the application started")
 			}
 		})
 	}
@@ -302,8 +325,8 @@ func TestConsentCategoryMisconfiguration(t *testing.T) {
 		"newline suffix":      {Plausible: pl, ConsentCategory: "analytics\n"},
 	} {
 		t.Run(name, func(t *testing.T) {
-			if code := get(app(t, false, opts, ""), "/").Code; code != http.StatusServiceUnavailable {
-				t.Errorf("status %d, want 503", code)
+			if !refused(t, opts) {
+				t.Error("the application started")
 			}
 		})
 	}

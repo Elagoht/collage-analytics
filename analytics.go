@@ -46,7 +46,7 @@ const Name = "elagoht/analytics"
 type Options struct {
 	Plausible   *Plausible   `json:"plausible"`
 	Umami       *Umami       `json:"umami"`
-	GoatCounter *GoatCounter `json:"goatcounter"`
+	GoatCounter *GoatCounter `json:"goatCounter"`
 	// GoogleAnalytics is Google Analytics 4. It sets cookies and sends what it
 	// collects to Google: it is not privacy-friendly, and in much of the world it
 	// needs the visitor's consent — see RequireConsent.
@@ -58,7 +58,7 @@ type Options struct {
 	// Privacy Control. The check runs in the browser, before any provider's
 	// script is fetched; a page cached for everyone cannot make it on the
 	// server.
-	RespectDNT bool `json:"respectDnt"`
+	RespectDNT bool `json:"respectDNT"`
 	// RequireConsent loads nothing until the page calls
 	// window.collageAnalyticsConsent(). The site shows its own banner and calls
 	// it when the visitor agrees; the answer is remembered in localStorage, and
@@ -89,7 +89,7 @@ type Plausible struct {
 // Umami is https://umami.is, or a server of one's own.
 type Umami struct {
 	// WebsiteID is the site's id, a UUID.
-	WebsiteID string `json:"websiteId"`
+	WebsiteID string `json:"websiteID"`
 	// Script is the script's URL. Default "https://cloud.umami.is/script.js".
 	Script string `json:"script"`
 }
@@ -108,7 +108,7 @@ type GoatCounter struct {
 // GoogleAnalytics is Google Analytics 4.
 type GoogleAnalytics struct {
 	// MeasurementID is the stream's id: "G-XXXXXXXXXX".
-	MeasurementID string `json:"measurementId"`
+	MeasurementID string `json:"measurementID"`
 }
 
 // Plugin adds the snippet.
@@ -124,7 +124,7 @@ type Plugin struct {
 func New(opts Options) *Plugin { return &Plugin{opts: opts} }
 
 func (p *Plugin) Name() string                   { return Name }
-func (p *Plugin) Version() string                { return "0.2.2" }
+func (p *Plugin) Version() string                { return "0.2.3" }
 func (p *Plugin) Shutdown(context.Context) error { return nil }
 
 var (

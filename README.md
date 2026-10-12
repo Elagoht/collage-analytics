@@ -13,7 +13,7 @@ app, err := collage.New(&collage.Config{
 })
 ```
 
-Requires collage v0.58.0 or later. The layout places the snippet with
+Requires collage v0.61.0 or later. The layout places the snippet with
 `{{hoist "head"}}`; without the marker nothing appears.
 
 ## Providers
@@ -140,11 +140,11 @@ takes the place of the one in the table.
 {
   "elagoht/analytics": {
     "plausible": { "domain": "example.com", "script": "https://stats.example.com/js/script.js" },
-    "umami": { "websiteId": "94db1cb1-74f4-4a40-ad6c-962362670409", "script": "https://cloud.umami.is/script.js" },
-    "goatcounter": { "code": "mysite" },
-    "googleAnalytics": { "measurementId": "G-XXXXXXXXXX" },
+    "umami": { "websiteID": "94db1cb1-74f4-4a40-ad6c-962362670409", "script": "https://cloud.umami.is/script.js" },
+    "goatCounter": { "code": "mysite" },
+    "googleAnalytics": { "measurementID": "G-XXXXXXXXXX" },
     "exclude": ["admin"],
-    "respectDnt": true,
+    "respectDNT": true,
     "requireConsent": true,
     "loaderPath": "/collage-analytics.js"
   }
@@ -171,6 +171,13 @@ with `/` stop the application from starting — in development too.
   `'strict-dynamic'` and no host sources refuses them; list the origins.
 
 ## Changes
+
+- **0.2.3** Changed in v0.2.3: the JSON keys spell their initialisms as Go does —
+  `respectDnt` is `respectDNT`, `goatcounter` is `goatCounter`, Umami's
+  `websiteId` is `websiteID`, Google Analytics' `measurementId` is
+  `measurementID`. Keys match case-insensitively, so the old spellings still
+  work; the manifest and the docs use the new ones. collage.json gains a setup
+  note. Requires collage v0.61.0.
 
 - **0.2.2** Rebuilt against collage v0.60.0; the plugin's code is unchanged.
 

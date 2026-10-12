@@ -3,6 +3,7 @@
   "name": "elagoht/analytics",
   "description": "A collage plugin that adds an analytics snippet to every page's head.",
   "repository": "https://github.com/Elagoht/collage-analytics",
+  "setup": "Nothing is sent until a provider is named: set one of `\"plausible\"`, `\"umami\"`, `\"goatCounter\"` or `\"googleAnalytics\"` in this plugin's section of `plugins-config.json`; without one the application does not start.",
   "config": {
     "type": "object",
     "description": "A collage plugin that adds an analytics snippet to every page's head.",
@@ -18,7 +19,7 @@
           "type": "string"
         }
       },
-      "goatcounter": {
+      "goatCounter": {
         "type": "object",
         "properties": {
           "code": {
@@ -40,7 +41,7 @@
         "type": "object",
         "description": "GoogleAnalytics is Google Analytics 4. It sets cookies and sends what it collects to Google: it is not privacy-friendly, and in much of the world it needs the visitor's consent — see RequireConsent.",
         "properties": {
-          "measurementId": {
+          "measurementID": {
             "type": "string",
             "description": "MeasurementID is the stream's id: \"G-XXXXXXXXXX\"."
           }
@@ -69,7 +70,7 @@
         "type": "boolean",
         "description": "RequireConsent loads nothing until the page calls window.collageAnalyticsConsent(). The site shows its own banner and calls it when the visitor agrees; the answer is remembered in localStorage, and collageAnalyticsConsent(false) forgets it."
       },
-      "respectDnt": {
+      "respectDNT": {
         "type": "boolean",
         "description": "RespectDNT loads nothing for a browser sending Do Not Track or Global Privacy Control. The check runs in the browser, before any provider's script is fetched; a page cached for everyone cannot make it on the server."
       },
@@ -80,7 +81,7 @@
             "type": "string",
             "description": "Script is the script's URL. Default \"https://cloud.umami.is/script.js\"."
           },
-          "websiteId": {
+          "websiteID": {
             "type": "string",
             "description": "WebsiteID is the site's id, a UUID."
           }
